@@ -59,7 +59,8 @@ def modify_packet(packet):
     # return the modified packet
     return packet
 
-    QUEUE_NUM = 0
+
+QUEUE_NUM = 0
 # insert the iptables FORWARD rule
 os.system("iptables -I FORWARD -j NFQUEUE --queue-num {}".format(QUEUE_NUM))
 # instantiate the netfilter queue
