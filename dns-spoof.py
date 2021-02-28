@@ -3,8 +3,8 @@ from netfilterqueue import NetfilterQueue
 import os
 
 dns_hosts = {
-    b"www.google.com.": "34.212.60.182",
-    b"google.com.": "34.212.60.182",
+    b"abc.ca": "34.212.60.182",
+    b"www.bcit.ca": "34.212.60.182",
     b"facebook.com.": "34.212.60.182"
 }
 

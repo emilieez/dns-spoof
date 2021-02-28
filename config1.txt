@@ -1,6 +1,7 @@
-34.221.55.14
-34.210.3.49
-0a:ac:6e:25:6a:a5
-0a:37:a5:9c:01:ff
+192.168.1.101
+192.168.1.254
+78:dd:12:ee:a8:b8
+08:00:27:e9:3d:0c
+08:00:27:ab:ea:06
 
-victimIP, routerIP, routerMAC, victimMAC
+victimIP, routerIP, routerMAC, victimMAC, attackMAC
