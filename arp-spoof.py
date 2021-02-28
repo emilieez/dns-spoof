@@ -39,7 +39,7 @@ class arpSpoofThread (Thread):
         self.delay = delay
     
     def run(self):
-	 while 1:
+	    while 1:
         	poison(routerIP, victimIP, routerMAC, victimMAC)
         	time.sleep(1.5)
 
