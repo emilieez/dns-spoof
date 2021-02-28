@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # victim ip address
     target = "192.168.1.101"
     # gateway ip address
-    host = "192.168.1.100"
+    host = "192.168.1.254"
     # print progress to the screen
     verbose = True
     # enable ip forwarding

