@@ -1,0 +1,7 @@
+192.168.1.111
+192.168.1.1
+b4:75:0e:fe:84:ea
+c4:85:08:9b:5a:a0
+40:16:7e:33:83:91
+
+victimIP, routerIP, routerMAC, victimMAC, attackMAC.
