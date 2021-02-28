@@ -1,7 +1,6 @@
-192.168.1.111
-192.168.1.1
-b4:75:0e:fe:84:ea
-c4:85:08:9b:5a:a0
-40:16:7e:33:83:91
+34.221.55.14
+34.210.3.49
+fe80::8ac:6eff:fe25:6aa5
+fe80::837:a5ff:fe9c:1ff
 
-victimIP, routerIP, routerMAC, victimMAC, attackMAC.
+victimIP, routerIP, routerMAC, victimMAC
