@@ -1,6 +1,6 @@
 34.221.55.14
 34.210.3.49
-fe80::8ac:6eff:fe25:6aa5
-fe80::837:a5ff:fe9c:1ff
+0a:ac:6e:25:6a:a5
+0a:37:a5:9c:01:ff
 
 victimIP, routerIP, routerMAC, victimMAC
