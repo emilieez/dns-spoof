@@ -5,7 +5,7 @@ import argparse
 
 def dns_responder(local_ip: str, victim_ip: str, router_ip: str):
 
-    def get_response(pkt: IP, victim_ip, router_ip):
+    def get_response(pkt: IP):
         if (
             DNS in pkt and
             pkt[DNS].opcode == 0 and
