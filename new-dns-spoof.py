@@ -24,10 +24,11 @@ if __name__ == "__main__":
     BPF_FILTER = f"udp port 53"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--responder", dest="dns_responder_ip", help="DNS Responder IP")
+    parser.add_argument("-h", "--host", dest="dns_responder_ip", help="DNS Responder IP")
     parser.add_argument("-t", "--target", dest="target_ip", help="DNS Spoof Victim IP")
     parser.add_argument("-i", "--interface", dest="network_interface", help="Network Interface")
     parser.add_argument("-s", "--spoof-ip", dest="spoof_ip", help="Spoof IP address")
+    parser.add_argument("-r", "--router-ip", dest="router_ip", help="Router IP")
     args=parser.parse_args()
 
     dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
@@ -35,5 +36,6 @@ if __name__ == "__main__":
     network_interface = args.network_interface if args.network_interface else "enp0s3"
     dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
     spoof_ip = args.spoof_ip if args.spoof_ip else "142.232.230.10"
+    router_ip = args.router_ip if args.router_ip else "192.168.0.254"
 
     sniff(filter=BPF_FILTER, prn=dns_responder(dns_responder_ip, dns_spoof_victim_ip, router_ip. spoof_ip), iface=network_interface)
