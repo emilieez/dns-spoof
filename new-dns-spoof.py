@@ -21,7 +21,7 @@ def dns_responder(local_ip: str, victim_ip: str, spoof_ip: str):
 
 
 if __name__ == "__main__":
-    BPF_FILTER = f"udp port 53"
+    BPF_FILTER = f"udp port 53 or tcp port 53"
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--responder", dest="dns_responder_ip", help="DNS Responder IP")
