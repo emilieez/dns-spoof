@@ -35,6 +35,5 @@ if __name__ == "__main__":
     network_interface = args.network_interface if args.network_interface else "enp0s3"
     dns_responder_ip = args.dns_responder_ip if args.dns_responder_ip else "192.168.0.108"
     spoof_ip = args.spoof_ip if args.spoof_ip else "142.232.230.10"
-    router_ip = args.router_ip if args.router_ip else "192.168.0.254"
 
     sniff(filter=BPF_FILTER, prn=dns_responder(dns_responder_ip, dns_spoof_victim_ip, spoof_ip), iface=network_interface)
