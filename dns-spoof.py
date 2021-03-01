@@ -39,11 +39,11 @@ def modify_packet(packet):
     """
     # get the DNS question name, the domain name
     qname = packet[DNSQR].qname
-    if qname not in dns_hosts:
+    #if qname not in dns_hosts:
         # if the website isn't in our record
         # we don't wanna modify that
-        print("no modification:", qname)
-        return packet
+     #   print("no modification:", qname)
+      #  return packet
     # craft new answer, overriding the original
     # setting the rdata for the IP we want to redirect (spoofed)
     # for instance, google.com will be mapped to "192.168.1.100"
